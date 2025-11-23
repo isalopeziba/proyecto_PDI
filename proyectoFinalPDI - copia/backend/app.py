@@ -9,6 +9,9 @@ from PIL import Image
 import json
 import traceback
 import logging
+import numpy as np
+from ultralytics import YOLO
+
 
 # ---------------------------
 # Logging
@@ -70,7 +73,7 @@ log.info(f"Clases cargadas: {classes}")
 # Device y carga del modelo
 # ---------------------------
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-MODEL_PATH = "best_model.pt"
+MODEL_PATH = "modeloPre.pt"
 
 model = CNN()
 state = torch.load(MODEL_PATH, map_location=DEVICE)
@@ -90,7 +93,32 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean, std)       # misma normalización usada en entrenamiento
 ])
+yolo_basura = YOLO("best_basura.pt")
+yolo_huecos = YOLO("best_huecos.pt")
+log.info("Modelos YOLO cargados: best_basura.pt y best_huecos.pt")
 
+#-----------------------------
+#Preprocesamiento
+#-----------------------------
+def convolution2d(image, kernel):
+    if len(image.shape) == 2:
+        image = np.expand_dims(image, axis=2)
+
+    output = np.zeros_like(image)
+    image_padded = np.pad(image, ((1, 1), (1, 1), (0, 0)), mode='constant')
+
+    for c in range(image.shape[2]):
+        for y in range(image.shape[0]):
+            for x in range(image.shape[1]):
+                output[y, x, c] = (kernel * image_padded[y:y+3, x:x+3, c]).sum()
+    return output
+
+# Kernel para resaltar bordes
+edge_kernel = np.array([
+    [-1, -1, -1],
+    [-1,  9, -1],
+    [-1, -1, -1]
+])
 # ---------------------------
 # Endpoint /predict
 # ---------------------------
@@ -112,19 +140,57 @@ def predict():
         img_t = transform(img).unsqueeze(0)               # 1 x C x H x W
         img_t = img_t.to(DEVICE)
 
+        #--------------------------------------------------------------------
+        #Hacer el preprosesamiento
+        #------------------------------------------------------------------
+        img_np = np.array(img)
+        image_edge= convolution2d(img_np, edge_kernel)
+        image_edge = transform(img).unsqueeze(0)               # 1 x C x H x W
+        image_edge = img_t.to(DEVICE)
+
         with torch.no_grad():
-            outputs = model(img_t)                        # logits
+            outputs = model(image_edge)                        # logits
             probs = F.softmax(outputs, dim=1).cpu().numpy()[0]
             pred_idx = int(probs.argmax())
             pred_label = classes[pred_idx]
 
         log.info(f"Predicción: idx={pred_idx}, label={pred_label}, probs={probs.tolist()}")
 
+
+
+        #-----------------------------------------
+        #Modelo YOLO basura
+        #------------------------------------------
+
+        try:
+            #results_basura = yolo_basura.predict(source=img, conf=0.02)
+            results_basura = yolo_basura(img)
+            basura_boxes = results_basura[0].boxes.xyxy.cpu().numpy().tolist()
+        except:
+            basura_boxes = []
+
+
+        # --------------------------------------
+        # 2. Si es "Huecos", aplicamos YOLO
+        # --------------------------------------
+        huecos_boxes = []
+
+        if pred_label == "Huecos":
+            try:
+                results_huecos = yolo_huecos(img)
+                huecos_boxes = results_huecos[0].boxes.xyxy.cpu().numpy().tolist()
+            except:
+                huecos_boxes = []
+
+
+
         return jsonify({
             "prediction": pred_label,
             "class_id": pred_idx,
             "probabilities": probs.tolist(),
-            "classes": classes
+            "classes": classes,
+            "basura_boxes": basura_boxes,
+            "huecos_boxes": huecos_boxes
         })
     except Exception as e:
         # registrar el stacktrace en consola para depuración

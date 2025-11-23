@@ -6,24 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeRoute</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Leaflet (mapas) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Librería para leer EXIF -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
 </head>
 
 <body>
     <div class="Header">
         <h1>SafeRoute</h1>
+        <img src="img/carro.png" alt="Moto" class="header-icon icon-left">
+
+        <!-- Carro -->
+        <img src="img/carro.png" alt="Carro" class="header-icon icon-right">
+
     </div>
-    <div class="container">
-        <h2>Clasificador de Calles</h2>
 
-        <input type="file" id="imageInput" accept="image/*">
+    <div class="main-wrapper">
 
-        <img id="preview" class="preview" style="display:none;">
-        <canvas id="canvas" style="display:none; max-width: 100%;"></canvas>
+        <!-- CONTENEDOR IZQUIERDO: Imagen original -->
+        <div class="container" id="left-container">
+            <h2 style=" font-family: Verdana, Geneva, Tahoma, sans-serif" ;>Clasificador de Calles y Basura</h2>
 
-        <button onclick="enviarImagen()">Clasificar Imagen</button>
+            <label for="imageInput" class="road-upload">
+                <span class="line"></span>
 
-        <div id="result" class="result" style="display:none;"></div>
+                Subir evidencia
+                <span class="line"></span>
+            </label>
+
+            <input type="file" id="imageInput" accept="image/*">
+
+            <input type="file" id="imageInput" accept="image/*">
+
+            <!-- Vista previa -->
+            <img id="preview" class="preview" style="display:none;">
+
+            <button onclick="enviarImagen()">Clasificar Imagen</button>
+
+            <div id="result" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- CONTENEDOR DERECHO: Resultados (canvas con cajas) -->
+        <div class="container" id="right-container">
+            <h2 style=" font-family: Verdana, Geneva, Tahoma, sans-serif">Resultado</h2>
+
+            <canvas id="canvas" style="display:none; width: 80%; border-radius: 10px; margin: 0 auto;"></canvas>
+
+            <p id="info-text" class="info-text" style="display:none;"></p>
+        </div>
+
     </div>
+    <div id="mapContainer" class="map-container" style="display:none;">
+        <div class="map-header">📍 Ubicación detectada</div>
+        <div id="map" class="map-box"></div>
+    </div>
+
+    <div id="noLocation" class="no-location" style="display:none;">
+        No se detectó ubicación en la imagén.
+    </div>
+
 
     <!-- Vincular JS -->
     <script src="script.js"></script>

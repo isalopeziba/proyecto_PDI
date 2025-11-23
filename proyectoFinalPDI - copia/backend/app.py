@@ -183,7 +183,7 @@ def predict():
                 huecos_boxes = []
 
 
-
+ 
         return jsonify({
             "prediction": pred_label,
             "class_id": pred_idx,

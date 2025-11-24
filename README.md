@@ -39,6 +39,7 @@ Este repositorio integra:
 
 # Manual de Usario del aplicativo
 Esta guía explica cómo utilizar el aplicativo una vez está funcionando.
+[![Mira la imagen ](https://github.com/isalopeziba/proyecto_PDI/blob/ba20e6604841a35aeee5e1d331794306abb1eee8/img2.png)]
 
 **1. Ingreso al sistema**
 Al abrir el aplicativo web, encontrarás la interfaz principal donde podrás cargar imágenes, iniciar análisis o interactuar con el modelo visual integrado.

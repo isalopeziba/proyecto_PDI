@@ -1,11 +1,23 @@
 # backend/app.py
+"""
+----------------------------------------------------------
+backend/app.py
+Backend en Flask que recibe imágenes, realiza:
+
+1. Preprocesamiento (filtro pasa-alta)
+2. Clasificación con una CNN entrenada
+3. Detección de basura con YOLO (best_basura.pt)
+4. Detección de huecos con YOLO (best_huecos.pt)
+5. Retorno JSON incluyendo bounding boxes y clase principal
+----------------------------------------------------------
+"""
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import transforms
-from PIL import Image
+from PIL import Image, ExifTags
 import json
 import traceback
 import logging
@@ -100,7 +112,9 @@ log.info("Modelos YOLO cargados: best_basura.pt y best_huecos.pt")
 #-----------------------------
 #Preprocesamiento
 #-----------------------------
+
 def convolution2d(image, kernel):
+    
     if len(image.shape) == 2:
         image = np.expand_dims(image, axis=2)
 
@@ -119,11 +133,44 @@ edge_kernel = np.array([
     [-1,  9, -1],
     [-1, -1, -1]
 ])
+
+#-----------------------------
+#Ajustar Imagen
+#-----------------------------
+def preprocess_image(img):
+    # --- Fix orientation ---
+    try:
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        exif = dict(img._getexif().items())
+        if exif[orientation] == 3:
+            img = img.rotate(180, expand=True)
+        elif exif[orientation] == 6:
+            img = img.rotate(270, expand=True)
+        elif exif[orientation] == 8:
+            img = img.rotate(90, expand=True)
+    except:
+        pass
+
+    # --- Resize if too large ---
+    MAX_SIZE = 1280
+    img.thumbnail((MAX_SIZE, MAX_SIZE))
+
+    return img
 # ---------------------------
 # Endpoint /predict
 # ---------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
+    """
+    Recibe una imagen y retorna:
+    - Clase principal
+    - Probabilidades
+    - Bounding boxes de basura
+    - Bounding boxes de huecos (si aplica)
+    """
+
     try:
         log.info("Petición /predict recibida")
         if "image" not in request.files:
@@ -137,6 +184,7 @@ def predict():
 
         # Abrir imagen y transformar exactamente como en entrenamiento
         img = Image.open(file.stream).convert("RGB")
+        img = preprocess_image(img)
         img_t = transform(img).unsqueeze(0)               # 1 x C x H x W
         img_t = img_t.to(DEVICE)
 
@@ -163,8 +211,8 @@ def predict():
         #------------------------------------------
 
         try:
-            #results_basura = yolo_basura.predict(source=img, conf=0.02)
-            results_basura = yolo_basura(img)
+            results_basura = yolo_basura.predict(source=img, conf=0.04)
+            #results_basura = yolo_basura(img)
             basura_boxes = results_basura[0].boxes.xyxy.cpu().numpy().tolist()
         except:
             basura_boxes = []
@@ -182,8 +230,6 @@ def predict():
             except:
                 huecos_boxes = []
 
-
- 
         return jsonify({
             "prediction": pred_label,
             "class_id": pred_idx,

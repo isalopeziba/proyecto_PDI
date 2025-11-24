@@ -1,3 +1,14 @@
+
+/*
+----------------------------------------------------------
+frontend/script.js
+Lógica cliente:
+- Enviar imagen al backend
+- Dibujar la imagen en un canvas
+- Dibujar bounding boxes de YOLO
+- Mostrar información de clasificación
+----------------------------------------------------------
+*/
 function enviarImagen() {
     const input = document.getElementById("imageInput");
     const file = input.files[0];
@@ -38,6 +49,7 @@ function enviarImagen() {
             resultDiv.innerHTML = `
             <b>Clasificación:</b> ${data.prediction}<br>
             <b>ID de clase:</b> ${data.class_id}
+            <b>Basuras detectadas:</b> ${data.basura_boxes ? data.basura_boxes.length : 0}
         `;
             // Cambiar color del contenedor derecho según el resultado
             actualizarColorContainer(data.prediction);

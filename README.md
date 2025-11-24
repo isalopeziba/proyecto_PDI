@@ -62,3 +62,10 @@ El resultado aparecerá: debajo de la imagen y en un panel lateral.
 
 **5. Reiniciar o cargar otra imagen**
 El botón “Subir Evidencia” te permite iniciar el proceso nuevamente sin recargar la página.
+
+# Datasets y repositorios usados
+- https://github.com/jeremy-rico/litter-detection/tree/master/runs/detect/train
+- https://www.kaggle.com/datasets/rajdalsaniya/pothole-detection-dataset?source=post_page-----f605f6eb4d9c---------------------------------------
+- https://www.kaggle.com/datasets/rizwan123456789/road-crack-condition-images-pakistan
+- https://datasetninja.com/road-damage-detector
+

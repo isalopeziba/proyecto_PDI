@@ -1,6 +1,7 @@
 # proyecto_PDI
 SafeRoute es una aplicación web que permite clasificar el estado de una calle (Calle Buena, Grietas o Huecos) mediante una red neuronal CNN y detectar anomalías con un modelo YOLO.
 Además, extrae la ubicación GPS desde los metadatos EXIF de la fotografía y la muestra en un mapa interactivo con Leaflet.
+[![Ver video de demostración]](https://raw.githubusercontent.com/isalopeziba/proyecto_PDI/e2f57e08f18f86ce8ff109e77a19f509028b8660/videoSaferoute.mp4)
 
 Este repositorio integra:
 
